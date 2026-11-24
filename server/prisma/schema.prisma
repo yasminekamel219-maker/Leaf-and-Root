@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Internal authorization role. Never accepted from clients; granting ADMIN is a
+/// database/operator action until an RBAC requirement is approved.
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique @db.VarChar(254)
+  passwordHash String
+  name         String    @db.VarChar(80)
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  plants       Plant[]
+}
+
+/// A plant owned by exactly one user. Field set is a provisional engineering assumption, not a
+/// product-owner-approved requirement (see server/docs/04-plant-management-decision-review.md).
+/// No `deletedAt`: deletion semantics (hard vs soft) are not approved yet (PM-6).
+model Plant {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  name      String   @db.VarChar(80)
+  species   String?  @db.VarChar(120)
+  location  String?  @db.VarChar(80)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  /// Restrict, not Cascade: removing a user must not silently destroy their plants until an
+  /// account-deletion and retention policy is approved (D7).
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique @db.Char(64)
+  userId    String   @db.Uuid
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}

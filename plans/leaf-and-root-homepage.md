@@ -1,5 +1,9 @@
 # Leaf & Root — Homepage UX Audit & Redesign Implementation Plan
 
+> **Historical frontend plan.** Its "Current State Audit" describes the repository before the homepage was
+> built (`src/pages/HomePage.tsx` now exists). It contains no backend requirements. For current project
+> status see the [root README](../README.md).
+
 ## 1. Executive Summary & Audit Findings
 
 ### Current State Audit

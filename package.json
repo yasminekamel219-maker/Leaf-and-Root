@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "pnpm --dir server dev",
     "build": "vite build",
+    "typecheck:web": "tsc --noEmit",
+    "typecheck": "pnpm typecheck:web && pnpm --dir server typecheck",
+    "test": "pnpm --dir server test",
+    "check": "pnpm --dir server prisma:generate && pnpm test && pnpm typecheck && pnpm build && pnpm --dir server build",
     "preview": "vite preview",
     "format": "oxfmt"
   },
@@ -25,5 +30,10 @@
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
     "vite": "^8.0.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "effect": "3.22.1"
+    }
   }
 }

@@ -4,9 +4,46 @@ import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Check, ShieldCheck, ArrowRight } from "lucide-react";
 
+type AuthPayload = { email: string; password: string; name?: string };
+
+async function submitAuth(path: "login" | "register", payload: AuthPayload) {
+  const response = await fetch(`/api/v1/auth/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+    throw new Error(
+      body?.error?.message ?? "We could not complete your request. Please try again.",
+    );
+  }
+}
+
 export const LoginPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await submitAuth("login", { email, password });
+      setSubmitted(true);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main id="main-content" className="section-space flex items-center justify-center min-h-[75vh]">
@@ -32,13 +69,7 @@ export const LoginPage: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSubmitted(true);
-              }}
-              className="space-y-4 text-xs"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="font-semibold block mb-1 text-forest-950">Email Address</label>
                 <input
@@ -59,13 +90,24 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="password"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-white text-sm focus:border-forest-600 focus:outline-none focus:ring-3 focus:ring-forest-100"
                 />
               </div>
 
-              <Button type="submit" fullWidth={true} size="lg">
-                Sign in to your account
+              {error && (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-error/30 bg-error/5 p-3 text-error-strong"
+                >
+                  {error}
+                </p>
+              )}
+
+              <Button type="submit" fullWidth={true} size="lg" disabled={isSubmitting}>
+                {isSubmitting ? "Signing in…" : "Sign in to your account"}
               </Button>
 
               <p className="text-center text-text-subtle pt-2">
@@ -84,6 +126,25 @@ export const LoginPage: React.FC = () => {
 
 export const SignupPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await submitAuth("register", { name, email, password });
+      setSubmitted(true);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to create account.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main id="main-content" className="section-space flex items-center justify-center min-h-[75vh]">
@@ -108,18 +169,16 @@ export const SignupPage: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSubmitted(true);
-              }}
-              className="space-y-4 text-xs"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
                 <label className="font-semibold block mb-1 text-forest-950">Your Full Name</label>
                 <input
                   type="text"
                   required
+                  minLength={2}
+                  maxLength={80}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Jordan Miller"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-white text-sm focus:border-forest-600 focus:outline-none focus:ring-3 focus:ring-forest-100"
                 />
@@ -130,6 +189,8 @@ export const SignupPage: React.FC = () => {
                 <input
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-white text-sm focus:border-forest-600 focus:outline-none focus:ring-3 focus:ring-forest-100"
                 />
@@ -140,13 +201,26 @@ export const SignupPage: React.FC = () => {
                 <input
                   type="password"
                   required
+                  minLength={10}
+                  maxLength={128}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password"
                   className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-white text-sm focus:border-forest-600 focus:outline-none focus:ring-3 focus:ring-forest-100"
                 />
               </div>
 
-              <Button type="submit" fullWidth={true} size="lg">
-                Create Free Account
+              {error && (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-error/30 bg-error/5 p-3 text-error-strong"
+                >
+                  {error}
+                </p>
+              )}
+
+              <Button type="submit" fullWidth={true} size="lg" disabled={isSubmitting}>
+                {isSubmitting ? "Creating account…" : "Create Free Account"}
               </Button>
 
               <div className="pt-2 flex items-center justify-center gap-1.5 text-text-subtle text-[11px]">

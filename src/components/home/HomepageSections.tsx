@@ -236,7 +236,7 @@ export const HeroSection: React.FC = () => {
             <Button to="/signup" size="lg">
               Start your plant collection
             </Button>
-            <Button to="/#how-it-works" size="lg" variant="outline">
+            <Button href="#how-it-works" size="lg" variant="outline">
               See how Leaf &amp; Root works
             </Button>
           </div>
